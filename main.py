@@ -21,7 +21,7 @@ def main():
     
     sol = p.getSolver()
 
-    print(sol.getSolution())
+    print(sol)
 
 if __name__ == "__main__":
     main()
