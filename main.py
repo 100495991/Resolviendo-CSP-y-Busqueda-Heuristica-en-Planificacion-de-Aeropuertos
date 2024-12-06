@@ -1,4 +1,7 @@
 #!usr/bin/env python3
+from constraint import Problem
+
+
 
 class InputError(Exception):
     def __init__(self, message="Input Inválido"):
@@ -58,20 +61,50 @@ def read_input(file):
     print("Parking: " + str(parking))
     for i in aviones:
         print("Avion " + str(i["id"]) + ": " + str(i))
-
     
+    return franjas, dimensiones, talleres_std, talleres_spc, parking, aviones
+
 
 def main():
     # Llamada a la función read_input con un archivo de ejemplo
     try:
         input_file = "entrada.txt"  # Asegúrate de que este archivo exista
-        read_input(input_file)
+        franjas, dimensiones, talleres_std, talleres_spc, parking, aviones = read_input(input_file)
     except FileNotFoundError:
         print(f"Error: El archivo {input_file} no se encuentra.")
     except InputError as e:
         print(f"Error de entrada: {e}")
     except Exception as e:
         print(f"Ocurrió un error inesperado: {e}")
+
+    problem = Problem()
+
+    #Modelado de las variables, cada variable sera 1 avión en cada franja av1_0, av1_1, ...
+    for i in range(len(aviones)):
+        for j in range(franjas):
+            problem.addVariable(f"av{i}_{j}", range(dimensiones[0]*dimensiones[1]))
+    
+    
+    for j in range(franjas):
+        aviones_franja = [f"av{i}_{j}" for i in range(len(aviones))]
+        problem.addConstraint(capacidad_talleres, aviones_franja, talleres_std + talleres_spc, aviones)
+        
+    #MAL MAL MAL
+    def capacidad_talleres(aviones_franja, talleres, aviones):
+        # Diccinario que tiene como clave el nombre de los talleres 
+        ocupacion = {}
+        for taller in talleres:
+            ocupacion[taller] = []
+
+    """for i in range(franjas):
+        for j in range(dimensiones[0]):
+            for k in range(dimensiones[1]):
+                problem.addConstraint(funcion, aviones)"""
+
+                
+                
+            
+
 
 if __name__ == "__main__":
     main()
