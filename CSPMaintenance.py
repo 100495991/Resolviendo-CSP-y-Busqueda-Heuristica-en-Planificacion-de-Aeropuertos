@@ -19,30 +19,34 @@ def read_input(file):
 
     #El string de entrada se va divir en pares de numeros para introducirlos en una lista de tuplas de enteros
     # para poder trabajar facilmente con los datos
-    talleres_std = []
-    lista_posicones_std = lines[2].split(':')[1].split(" ")
 
-    for item in lista_posicones_std:
-        item = item[1:-1]  # Eliminar los paréntesis
-        item = item.split(',')
-        talleres_std.append((int(item[0]), int(item[1])))
+    talleres_std = []
+    if lines[2].split(':')[1] != '':
+        lista_posicones_std = lines[2].split(':')[1].split(" ")
+
+        for item in lista_posicones_std:
+            item = item[1:-1]  # Eliminar los paréntesis
+            item = item.split(',')
+            talleres_std.append((int(item[0]), int(item[1])))
 
     talleres_spc = []
-    lista_posiciones_spc = lines[3].split(':')[1].split(" ")
+    if lines[3].split(':')[1] != '':
+        lista_posiciones_spc = lines[3].split(':')[1].split(" ")
 
-    for item in lista_posiciones_spc:
-        item = item[1:-1]  # Eliminar los paréntesis
-        item = item.split(',')
-        talleres_spc.append((int(item[0]), int(item[1])))
+        for item in lista_posiciones_spc:
+            item = item[1:-1]  # Eliminar los paréntesis
+            item = item.split(',')
+            talleres_spc.append((int(item[0]), int(item[1])))
 
     parking = []
-    lista_posiciones_parking = lines[4].split(':')[1].split(" ")
+    if lines[4].split(':')[1] != '':
+        lista_posiciones_parking = lines[4].split(':')[1].split(" ")
 
-    for item in lista_posiciones_parking:
-        item = item[1:-1]  # Eliminar los paréntesis
-        item = item.split(',')
-        parking.append((int(item[0]), int(item[1])))
-    
+        for item in lista_posiciones_parking:
+            item = item[1:-1]  # Eliminar los paréntesis
+            item = item.split(',')
+            parking.append((int(item[0]), int(item[1])))
+
     aviones = []
     
     for line in lines[5:]:
@@ -54,7 +58,6 @@ def read_input(file):
             "tipo1": int(element[3]),
             "tipo2": int(element[4]),
         })
-
     print("Franjas: " + str(franjas))
     print("Dimensiones: " + str(dimensiones))
     print("Talleres STD: " + str(talleres_std))
@@ -114,7 +117,7 @@ def main():
 
         problem.addConstraint(max_2_aviones, jumbo_variables + standard_variables)
 
-
+    
     # Restriccion si tiene asignada tarea especialista necesita pisar taller especialista
     for avion in aviones:
 
@@ -128,20 +131,20 @@ def main():
             return True
     
         problem.addConstraint(n_especialista, [f"av{avion['id']-1}_{i}" for i in range(franjas)])
-
-
+    
     # Restriccion hacer antes tareas especialistas que estandar
     for avion in aviones:
+        
         if avion["mantenimiento"]:
-
+            n_tareas2 = avion['tipo2']
             def orden_especialista(*args):
-                for i in range(avion['tipo2']):
+                for i in range(n_tareas2):
                     if args[i] not in talleres_spc:
                         return False
                 return True
-            
-            problem.addConstraint(orden_especialista, [f"av{avion['id']-1}_{i}" for i in range(franjas)])
+            problem.addConstraint(orden_especialista, [f"av{(avion['id'])-1}_{i}" for i in range(franjas)])
 
+    
     # Verificar la  maniobrabilidad de los aviones
     for franja in range(franjas):
 
@@ -161,10 +164,10 @@ def main():
                         continue
                 return False
             return True
-                
 
         problem.addConstraint(maniobrabilidad, [f"av{i}_{franja}" for i in range(len(aviones))])
-
+    
+    
     # Dos aviones jumbo no pueden estar en talleres adyacentes
     for franja in range(franjas):
         
@@ -185,13 +188,14 @@ def main():
             return True
     
         problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}" for avion in aviones if avion['tipo']=="JMB"])
+        
 
 
     soluciones = problem.getSolutions()
 
     print(f"N. Sol:  {len(soluciones)}")
     if soluciones:
-        for idx, solucion in enumerate(soluciones[:3]):  # Mostramos las primeras 3 soluciones
+        for idx, solucion in enumerate(soluciones[:10]):  # Mostramos las primeras 3 soluciones
             print(f"Solución {idx + 1}:")
             for avion in range(len(aviones)):
                 for franja in range(franjas):
