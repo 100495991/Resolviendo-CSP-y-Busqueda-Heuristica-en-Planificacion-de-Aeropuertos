@@ -10,9 +10,10 @@ class InputError(Exception):
         super().__init__(self.message)
 
 def read_input(file):
+
     with open(file, "r") as f:
         lines = f.read().strip().split("\n")
-        
+
     franjas = int(lines[0].split(': ')[1])
 
     dimensiones = (int(lines[1].split('x')[0]), int(lines[1].split('x')[1]))
@@ -58,6 +59,7 @@ def read_input(file):
             "tipo1": int(element[3]),
             "tipo2": int(element[4]),
         })
+    """
     print("Franjas: " + str(franjas))
     print("Dimensiones: " + str(dimensiones))
     print("Talleres STD: " + str(talleres_std))
@@ -65,6 +67,7 @@ def read_input(file):
     print("Parking: " + str(parking))
     for i in aviones:
         print("Avion " + str(i["id"]) + ": " + str(i))
+    """
     
     return franjas, dimensiones, talleres_std, talleres_spc, parking, aviones
 
@@ -85,6 +88,7 @@ def main():
         print(f"Error de entrada: {e}")
     except Exception as e:
         print(f"Ocurrió un error inesperado: {e}")
+
 
     problem = Problem()
 
@@ -119,14 +123,21 @@ def main():
 
     
     # Restriccion si tiene asignada tarea especialista necesita pisar taller especialista
+    # Si tiene asignada otra tarea, cualquier de los dos talleres
     for avion in aviones:
 
         def n_especialista(*args):
-            n = avion['tipo2']
-            for elemento in args:
-                if elemento in talleres_spc:
-                    n -= 1
-            if n > 0: 
+            n_spc = avion['tipo2']
+            n_total = avion['tipo2'] + avion['tipo1']
+            for posicion in args:
+                if posicion in talleres_spc:
+                    n_spc -= 1
+                    n_total -= 1
+                if posicion in talleres_std:
+                    n_total -= 1
+            if n_spc > 0: 
+                return False
+            if n_total > 0: 
                 return False
             return True
     
@@ -190,16 +201,37 @@ def main():
         problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}" for avion in aviones if avion['tipo']=="JMB"])
         
 
+    
 
     soluciones = problem.getSolutions()
+    
+    # Escribir la solucion en el archivo .csv
+    nombre_archivo = input_file[:-4] + ".csv"
 
-    print(f"N. Sol:  {len(soluciones)}")
-    if soluciones:
-        for idx, solucion in enumerate(soluciones[:10]):  # Mostramos las primeras 3 soluciones
-            print(f"Solución {idx + 1}:")
-            for avion in range(len(aviones)):
-                for franja in range(franjas):
-                    print(f"Avión {avion}, Franja {franja}: {solucion[f'av{avion}_{franja}']}")
-                
+    archivo = open(nombre_archivo, "w")
+
+    archivo.write(f"N. Sol:  {len(soluciones)}\n")
+
+    for i, solucion in enumerate(soluciones[:10]):
+        archivo.write(f"Solución {i+1}: \n")
+        for avion in aviones:
+            archivo.write(f"\t{avion['id']}-{avion['tipo']}-{"T" if avion['mantenimiento'] else "F"}-{avion['tipo1']}-{avion['tipo2']}: ")
+            
+            for j in range(franjas):
+
+                posicion = solucion[f'av{avion['id']-1}_{j}']
+                if posicion in talleres_spc:
+                    archivo.write(f"SPC{posicion}")
+                if posicion in talleres_std:
+                    archivo.write(f"STD{posicion}")
+                if posicion in parking:
+                    archivo.write(f"PRK{posicion}")
+                if j < franjas-1:
+                    archivo.write(", ")
+                else:
+                    archivo.write("\n")
+                    
+    archivo.close()
+                        
 
 main()
