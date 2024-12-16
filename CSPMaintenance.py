@@ -2,8 +2,6 @@
 from constraint import Problem
 import sys
 
-
-
 class InputError(Exception):
     def __init__(self, message="Input Inválido"):
         self.message = message
@@ -99,15 +97,15 @@ def main():
         def max_2_aviones(*args):
             contador = {}
             args_jmb = args[:n_jmb]
-            for elemento in args:
-                if elemento in contador:
-                    if elemento in args_jmb:
+            for posicion in args:
+                if posicion in contador:
+                    if posicion in args_jmb:
                         return False
-                    contador[elemento] += 1
+                    contador[posicion] += 1
                 else:
-                    contador[elemento] = 1
+                    contador[posicion] = 1
                 # Si un valor supera las dos repeticiones, se devuelve False
-                if contador[elemento] > 2:
+                if contador[posicion] > 2:
                     return False
             return True
 
@@ -117,30 +115,27 @@ def main():
     # Restriccion si tiene asignada tarea especialista necesita pisar taller especialista
     # Si tiene asignada otra tarea, cualquier de los dos talleres
     for avion in aviones:
-
-        def n_especialista(*args):
+        def n_especialista(*args, avion=avion):
             n_spc = avion['tipo2']
             n_total = avion['tipo2'] + avion['tipo1']
+
             for posicion in args:
                 if posicion in talleres_spc:
                     n_spc -= 1
                     n_total -= 1
                 if posicion in talleres_std:
                     n_total -= 1
-            if n_spc > 0: 
-                return False
-            if n_total > 0: 
+            if n_spc > 0 or n_total > 0:
                 return False
             return True
-    
+
         problem.addConstraint(n_especialista, [f"av{avion['id']-1}_{i}" for i in range(franjas)])
     
     # Restriccion hacer antes tareas especialistas que estandar
     for avion in aviones:
-        
         if avion["mantenimiento"]:
-            n_tareas2 = avion['tipo2']
-            def orden_especialista(*args):
+            def orden_especialista(*args, avion=avion):
+                n_tareas2 = avion['tipo2']
                 for i in range(n_tareas2):
                     if args[i] not in talleres_spc:
                         return False
@@ -165,6 +160,9 @@ def main():
                 if not avion[1] == dimensiones[1]-1:
                     if not (avion[0], avion[1]+1) in args:
                         continue
+                if avion[0] == 0 and avion[0] == dimensiones[0]-1 and avion[1] == 0 and avion[1] == dimensiones[1]-1:
+                    return True
+
                 return False
             return True
 
@@ -189,8 +187,10 @@ def main():
                     if (avion[0], avion[1]+1) in args:
                         return False
             return True
-    
-        problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}" for avion in aviones if avion['tipo']=="JMB"])
+        
+        for avion in aviones:
+            if avion['tipo'] == "JMB":
+                problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}"])
     
 
     soluciones = problem.getSolutions()
@@ -202,11 +202,11 @@ def main():
 
     archivo.write(f"N. Sol:  {len(soluciones)}\n")
 
-    for i, solucion in enumerate(soluciones[:10]):
+    for i, solucion in enumerate(soluciones):
         archivo.write(f"Solución {i+1}: \n")
         for avion in aviones:
             archivo.write(f"\t{avion['id']}-{avion['tipo']}-{"T" if avion['mantenimiento'] else "F"}-{avion['tipo1']}-{avion['tipo2']}: ")
-            
+
             for j in range(franjas):
                 posicion = solucion[f'av{avion['id']-1}_{j}']
                 if posicion in talleres_spc:
