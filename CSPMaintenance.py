@@ -59,15 +59,6 @@ def read_input(file):
             "tipo1": int(element[3]),
             "tipo2": int(element[4]),
         })
-    """
-    print("Franjas: " + str(franjas))
-    print("Dimensiones: " + str(dimensiones))
-    print("Talleres STD: " + str(talleres_std))
-    print("Talleres SPC: " + str(talleres_spc))
-    print("Parking: " + str(parking))
-    for i in aviones:
-        print("Avion " + str(i["id"]) + ": " + str(i))
-    """
     
     return franjas, dimensiones, talleres_std, talleres_spc, parking, aviones
 
@@ -93,6 +84,7 @@ def main():
     problem = Problem()
 
     #Modelado de las variables, cada variable sera 1 avión en cada franja av1_0, av1_1, ...
+    #Y su dominio es cada posicion en el conjunto de talleres
     for i in range(len(aviones)):
         for j in range(franjas):
             problem.addVariable(f"av{i}_{j}", talleres_std + talleres_spc + parking)
@@ -114,7 +106,7 @@ def main():
                     contador[elemento] += 1
                 else:
                     contador[elemento] = 1
-                # Si un valor supera las dos repeticiones, se devuelve Flase
+                # Si un valor supera las dos repeticiones, se devuelve False
                 if contador[elemento] > 2:
                     return False
             return True
@@ -199,8 +191,6 @@ def main():
             return True
     
         problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}" for avion in aviones if avion['tipo']=="JMB"])
-        
-
     
 
     soluciones = problem.getSolutions()
@@ -218,7 +208,6 @@ def main():
             archivo.write(f"\t{avion['id']}-{avion['tipo']}-{"T" if avion['mantenimiento'] else "F"}-{avion['tipo1']}-{avion['tipo2']}: ")
             
             for j in range(franjas):
-
                 posicion = solucion[f'av{avion['id']-1}_{j}']
                 if posicion in talleres_spc:
                     archivo.write(f"SPC{posicion}")
