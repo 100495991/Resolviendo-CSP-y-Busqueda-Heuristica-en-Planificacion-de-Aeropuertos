@@ -1,7 +1,6 @@
 Franjas: 2
 1x2
-STD:(0,1)
-SPC:(0,0)
+STD:(0,0)
+SPC:(0,1)
 PRK:
 1-STD-F-1-1
-2-STD-F-2-0

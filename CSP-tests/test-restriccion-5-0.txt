@@ -1,0 +1,9 @@
+Franjas: 2
+1x3
+STD:(0,0) (0,1) (0,2)
+SPC:
+PRK:
+1-STD-F-2-0
+2-STD-F-2-0
+3-STD-F-2-0
+4-STD-F-2-0

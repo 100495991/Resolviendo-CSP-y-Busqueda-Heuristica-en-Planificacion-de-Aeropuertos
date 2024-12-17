@@ -118,7 +118,6 @@ def main():
         def n_especialista(*args, avion=avion):
             n_spc = avion['tipo2']
             n_total = avion['tipo2'] + avion['tipo1']
-
             for posicion in args:
                 if posicion in talleres_spc:
                     n_spc -= 1
@@ -136,17 +135,21 @@ def main():
         if avion["mantenimiento"]:
             def orden_especialista(*args, avion=avion):
                 n_tareas2 = avion['tipo2']
-                for i in range(n_tareas2):
-                    if args[i] not in talleres_spc:
+                for posicion in args:
+                    if posicion in talleres_spc:
+                        n_tareas2 -= 1
+                    if posicion in talleres_std and n_tareas2 > 0:
                         return False
                 return True
+            
             problem.addConstraint(orden_especialista, [f"av{(avion['id'])-1}_{i}" for i in range(franjas)])
 
     
     # Verificar la  maniobrabilidad de los aviones
     for franja in range(franjas):
-
         def maniobrabilidad(*args):
+            if dimensiones == (1, 1):
+                return True
             for avion in args:
                 if not avion[0] == 0:
                     if not (avion[0]-1, avion[1]) in args:
@@ -160,9 +163,6 @@ def main():
                 if not avion[1] == dimensiones[1]-1:
                     if not (avion[0], avion[1]+1) in args:
                         continue
-                if avion[0] == 0 and avion[0] == dimensiones[0]-1 and avion[1] == 0 and avion[1] == dimensiones[1]-1:
-                    return True
-
                 return False
             return True
 
@@ -188,10 +188,13 @@ def main():
                         return False
             return True
         
+        aviones_jmb = []
         for avion in aviones:
             if avion['tipo'] == "JMB":
-                problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}"])
-    
+                aviones_jmb.append(avion)
+        if aviones_jmb:
+            problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}" for avion in aviones_jmb])
+
 
     soluciones = problem.getSolutions()
     
