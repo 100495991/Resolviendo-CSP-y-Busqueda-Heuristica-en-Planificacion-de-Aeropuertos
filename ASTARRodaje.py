@@ -114,7 +114,7 @@ class AStarRodaje:
             lista_cerrada.add(tuple(actual.estado))
             print(f"Lista cerrada: {lista_cerrada}")
 
-            
+
             for vecino in self.expandir_vecinos(actual, lista_fin):
                 if tuple(vecino.estado) in lista_cerrada:
                     print(f"Vecino ya explorado: {vecino.estado}")
@@ -156,11 +156,21 @@ class AStarRodaje:
         movimientos = [(0, 0), (0, 1), (1, 0), (0, -1), (-1, 0)]
         combinaciones = self.generar_combinaciones(len(self.aviones), movimientos)
 
+        """
+        Se itera sobre cada combinación de movimientos en la lista combinaciones, 
+        que es una lista que contiene los movimientos para cada avión.
+        """
         for movimiento in combinaciones:
             nuevo_estado = []
             valido = True
             posiciones_ocupadas = set()
 
+            """
+            zip(nodo_actual.estado, movimiento): Combina las posiciones actuales (nodo_actual.estado) y los movimientos 
+            (movimiento) en tuplas. 
+            Para cada tupla, posicion es una posición actual de un avión y mov es el movimiento que se va a aplicar a esa posición
+            enumerate: Añade el índice i a cada tupla de la combinación para identificar a qué avión pertenece cada posición y movimiento.
+            """
             for i, (posicion, mov) in enumerate(zip(nodo_actual.estado, movimiento)):
                 nueva_posicion = (posicion[0] + mov[0], posicion[1] + mov[1])
 
