@@ -99,7 +99,7 @@ class AStarRodaje:
             if actual.estado == lista_fin:
                 # Calculamos el tiempo total de ejecución
                 tiempo_ejecucion = time.time() - start_time
-                makespan = max(nodo.g for nodo in lista_abierta)  # El makespan es el tiempo máximo de los aviones
+                makespan = actual.g  # El makespan es el tiempo máximo de los aviones en llegar(los pasos hasta la solucion)
                 # Llamamos a guardar_solucion pasándole los pasos reconstruidos
                 solucion = self.reconstruir_camino(actual)
                 self.guardar_solucion(solucion)
@@ -114,7 +114,7 @@ class AStarRodaje:
                 self.insertar_nodo(lista_abierta, vecino)
 
             # Incrementamos el contador de nodos expandidos
-            self.nodos_expandidos += 1
+            self.nodos_expandidos = len(lista_cerrada)
 
         return None
 
@@ -165,6 +165,7 @@ class AStarRodaje:
             Para cada tupla, posicion es una posición actual de un avión y mov es el movimiento que se va a aplicar a esa posición
             enumerate: Añade el índice i a cada tupla de la combinación para identificar a qué avión pertenece cada posición y movimiento.
             """
+
             for i, (posicion, mov) in enumerate(zip(nodo_actual.estado, movimiento)):
                 nueva_posicion = (posicion[0] + mov[0], posicion[1] + mov[1])
 
@@ -235,7 +236,6 @@ class AStarRodaje:
                 
                 # Para el último paso, si no hay movimiento, agregamos 'w'
                 if len(pasos) > 1:
-                    # Si es el último paso, asignamos 'w' para el movimiento
                     movimientos.append("")
 
                 solucion_linea = " ".join([f"({p[0]},{p[1]}) {mov}" for p, mov in zip(pasos, movimientos)])
@@ -259,7 +259,6 @@ def main():
         print("El número de heurística debe ser 1 o 2")
         return -1
 
-    astar = AStarRodaje(sys.argv[1], int(sys.argv[2]))
     astar = AStarRodaje(sys.argv[1], int(sys.argv[2]))
     solucion = astar.aStar()
     if solucion == None:
