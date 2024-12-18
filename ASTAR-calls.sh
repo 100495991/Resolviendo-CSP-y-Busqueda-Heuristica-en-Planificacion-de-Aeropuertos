@@ -28,4 +28,17 @@ echo "Invalid2: Mapa con todo casillas grises"
 python ASTARRodaje.py ./ASTAR-tests/mapa07.csv 1
 python ASTARRodaje.py ./ASTAR-tests/mapa07.csv 2
 
+echo "valid5: Matriz columna"
+python ASTARRodaje.py ./ASTAR-tests/mapa08.csv 1
+python ASTARRodaje.py ./ASTAR-tests/mapa08.csv 2
+
+echo "valid6: Matriz fila"
+python ASTARRodaje.py ./ASTAR-tests/mapa09.csv 1
+python ASTARRodaje.py ./ASTAR-tests/mapa09.csv 2
+
+echo "valid7: Una sola casilla en blanco"
+python ASTARRodaje.py ./ASTAR-tests/mapa10.csv 1
+python ASTARRodaje.py ./ASTAR-tests/mapa10.csv 2
+
+
 
