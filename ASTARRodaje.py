@@ -1,6 +1,7 @@
 #!usr/bin/env python3
 import sys
 from itertools import product
+import time
 
 class InputError(Exception):
     def __init__(self, message="Input Inválido"):
@@ -33,6 +34,7 @@ class AStarRodaje:
         self.aviones, self.mapa = self.read_input(archivo)
         #Lista de la solucion para poder imprimirla
         self.solucion = []
+        self.nodos_expandidos = 0
 
     #Funcion para leer el archivo de entrada
     def read_input(self, file):
@@ -69,10 +71,6 @@ class AStarRodaje:
         filas = len(lineas) - n_aviones - 1
         columnas = len(lineas[n_aviones+1].split(';'))
         self.dimensiones = (filas, columnas)
-
-        print(f"Mapa cargado: {mapa}")
-        print(f"Aviones: {aviones}")
-        print(f"Dimensiones del mapa: {filas}x{columnas}")
         return aviones, mapa
 
     #Funcion para comprobar que al expandir los movimientos posibles no se generen invalidos
@@ -82,56 +80,48 @@ class AStarRodaje:
         filas, columnas = self.dimensiones
         return 0 <= x < filas and 0 <= y < columnas and self.mapa.get(posicion) != "G"
 
-    #Algoritmo A* para encontrar una solución para todos los aviones
     def aStar(self):
-        #Instanciar todas las posiciones de los aviones de inicio y fin
         lista_inicio = [avion["inicio"] for avion in self.aviones]
         lista_fin = [avion["fin"] for avion in self.aviones]
 
-        #Instanciar lista abierta en inicio vacia, y la lista cerrada
         lista_abierta = []
         lista_cerrada = set()
 
-        #Comenzar con el nodo incial que contendra la lista de las posiciones inciales 
         nodo_inicial = Nodo(estado=lista_inicio, g=0, h=self.heuristica_global(lista_inicio, lista_fin))
         self.insertar_nodo(lista_abierta, nodo_inicial)
 
-        print("Inicio A*")
-        print(f"Estado inicial: {nodo_inicial.estado}")
+        # Almacenamos el tiempo de inicio
+        start_time = time.time()
 
-        #Bucle de A*
         while lista_abierta:
-            #Expando el nodo con la f mas pequeña de la lista abierta
             actual = lista_abierta.pop(0)
-            print(f"\nExpandiendo nodo: {actual.estado}, f = {actual.f()}")
 
-            #Comparar las listas del estado del nodo y si es igual que la lista de posiciones meta, terminar
             if actual.estado == lista_fin:
-                print("¡Solución encontrada!")
-                return self.reconstruir_camino(actual)
+                # Calculamos el tiempo total de ejecución
+                tiempo_ejecucion = time.time() - start_time
+                makespan = max(nodo.g for nodo in lista_abierta)  # El makespan es el tiempo máximo de los aviones
+                # Llamamos a guardar_solucion pasándole los pasos reconstruidos
+                solucion = self.reconstruir_camino(actual)
+                self.guardar_solucion(solucion)
+                self.guardar_stats(tiempo_ejecucion, makespan, self.nodos_expandidos, nodo_inicial.h)
+                return solucion
 
-            #Añadir a la lista cerrada una tupla del estado que se ha visitado y se va expandir
             lista_cerrada.add(tuple(actual.estado))
-            print(f"Lista cerrada: {lista_cerrada}")
-
 
             for vecino in self.expandir_vecinos(actual, lista_fin):
                 if tuple(vecino.estado) in lista_cerrada:
-                    print(f"Vecino ya explorado: {vecino.estado}")
                     continue
-                print(f"Vecino válido: {vecino.estado}, f = {vecino.f()}")
                 self.insertar_nodo(lista_abierta, vecino)
 
-            print(f"Lista abierta actualizada: {[nodo.estado for nodo in lista_abierta]}")
+            # Incrementamos el contador de nodos expandidos
+            self.nodos_expandidos += 1
 
-        print("No se encontró solución.")
         return None
 
+
     def reconstruir_camino(self, nodo):
-        print("\nReconstruyendo el camino...")
         camino = []
         while nodo:
-            print(f"Estado: {nodo.estado}, g = {nodo.g}, h = {nodo.h}")
             camino.append(nodo.estado)
             nodo = nodo.padre
         return camino[::-1]
@@ -147,9 +137,13 @@ class AStarRodaje:
         x1, y1 = posicion1
         x2, y2 = posicion2
         return abs(x1 - x2) + abs(y1 - y2)
-
+       
     def heuristica_global(self, estado, meta):
-        return sum(self.calcular_heuristica(pos, objetivo) for pos, objetivo in zip(estado, meta))
+        if self.heuristica==1:
+            return sum(self.calcular_heuristica(pos, objetivo) for pos, objetivo in zip(estado, meta))
+        else:
+            return max(self.calcular_heuristica(pos, objetivo) for pos, objetivo in zip(estado, meta))
+
 
     def expandir_vecinos(self, nodo_actual, meta):
         vecinos = []
@@ -177,19 +171,16 @@ class AStarRodaje:
                 # Validar si la posición es válida en el mapa
                 if not self.posicion_valida(nueva_posicion):
                     valido = False
-                    print(f"Movimiento inválido: {nueva_posicion} está fuera del mapa o en una casilla 'G'")
                     break
                 
                 # Evitar que un avión espere en una casilla amarilla (Y)
                 if self.mapa.get(nueva_posicion) == 'Y' and mov == (0, 0):
                     valido = False
-                    print(f"Avión {i} no puede esperar en una casilla amarilla: {nueva_posicion}")
                     break
 
                 # Evitar que los aviones se crucen (no deben ocupar la misma casilla)
                 if nueva_posicion in posiciones_ocupadas:
                     valido = False
-                    print(f"Avión {i} no puede cruzarse con otro en {nueva_posicion}")
                     break
 
                 # Añadir la nueva posición a las posiciones ocupadas
@@ -202,7 +193,6 @@ class AStarRodaje:
                 for i, pos_actual in enumerate(nuevo_estado):
                     if pos_actual in nodo_actual.estado and pos_actual != nodo_actual.estado[i]:
                         valido = False
-                        print(f"Aviones no pueden intercambiar posiciones: {nodo_actual.estado[i]} ↔ {pos_actual}")
                         break
 
             # Si el estado es válido, crear el vecino
@@ -211,13 +201,54 @@ class AStarRodaje:
                 h = self.heuristica_global(nuevo_estado, meta)
                 vecino = Nodo(estado=nuevo_estado, g=g, h=h, padre=nodo_actual)
                 vecinos.append(vecino)
-                print(f"Vecino válido generado: {nuevo_estado}, g = {g}, h = {h}")
 
         return vecinos
 
-
     def generar_combinaciones(self, n_aviones, movimientos):
         return list(product(movimientos, repeat=n_aviones))
+
+    def guardar_solucion(self, solucion):
+        # Nombre del archivo para la solución
+        nombre_archivo = f"{sys.argv[1][:-4]}-{sys.argv[2]}.output"
+        
+        with open(nombre_archivo, 'w') as f:
+            if not solucion:  # Si la solución está vacía o no existe
+                f.write("No se encontró una solución.\n")
+                return
+            # Trasponer la solución, porque la solución está en formato de columnas por avión
+            solucion_traspuesta = list(zip(*solucion))
+
+            for pasos in solucion_traspuesta:
+                movimientos = []
+                for j in range(len(pasos) - 1):
+                    # Determinar el tipo de movimiento entre dos posiciones
+                    if pasos[j+1] == (pasos[j][0], pasos[j][1] + 1):
+                        movimientos.append("→")
+                    elif pasos[j+1] == (pasos[j][0], pasos[j][1] - 1):
+                        movimientos.append("←")
+                    elif pasos[j+1] == (pasos[j][0] + 1, pasos[j][1]):
+                        movimientos.append("↓")
+                    elif pasos[j+1] == (pasos[j][0] - 1, pasos[j][1]):
+                        movimientos.append("↑")
+                    else:
+                        movimientos.append("w")  # Si no se mueve, es un 'w'
+                
+                # Para el último paso, si no hay movimiento, agregamos 'w'
+                if len(pasos) > 1:
+                    # Si es el último paso, asignamos 'w' para el movimiento
+                    movimientos.append("")
+
+                solucion_linea = " ".join([f"({p[0]},{p[1]}) {mov}" for p, mov in zip(pasos, movimientos)])
+                f.write(solucion_linea + "\n")
+
+    def guardar_stats(self, tiempo_ejecucion, makespan, nodos_expandidos, heuristica_inicial):
+        nombre_archivo = f"{sys.argv[1][:-4]}-{sys.argv[2]}.stat"
+        with open(nombre_archivo, 'w') as f:
+            f.write("Estadísticas:\n")
+            f.write(f"Tiempo total: {tiempo_ejecucion:.2f}s\n")
+            f.write(f"Makespan: {makespan}\n")
+            f.write(f"h inicial: {heuristica_inicial}\n")
+            f.write(f"Nodos expandidos: {nodos_expandidos}\n")
 
 def main():
     if len(sys.argv) != 3:
@@ -229,11 +260,12 @@ def main():
         return -1
 
     astar = AStarRodaje(sys.argv[1], int(sys.argv[2]))
+    astar = AStarRodaje(sys.argv[1], int(sys.argv[2]))
     solucion = astar.aStar()
+    if solucion == None:
+        astar.guardar_solucion(solucion)  
     if solucion:
-        print("Solución encontrada:")
-        for paso in solucion:
-            print(paso)
+        print("Solución encontrada")
     else:
         print("No se encontró solución.")
 
