@@ -170,6 +170,11 @@ def main():
     
     
     # Dos aviones jumbo no pueden estar en talleres adyacentes
+    aviones_jmb = []
+    for avion in aviones:
+        if avion['tipo'] == "JMB":
+            aviones_jmb.append(avion)
+
     for franja in range(franjas):
         
         def jumbos_juntos(*args):
@@ -188,13 +193,9 @@ def main():
                         return False
             return True
         
-        aviones_jmb = []
-        for avion in aviones:
-            if avion['tipo'] == "JMB":
-                aviones_jmb.append(avion)
         if aviones_jmb:
             problem.addConstraint(jumbos_juntos, [f"av{avion['id']-1}_{franja}" for avion in aviones_jmb])
-
+            
 
     soluciones = problem.getSolutions()
     
